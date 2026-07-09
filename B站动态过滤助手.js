@@ -95,7 +95,8 @@
         restoringGroupFilter: false,
         lastFeedRequestAt: 0,
         typeLayoutWatcherBound: false,
-        typeLayoutFrameId: 0
+        typeLayoutFrameId: 0,
+        typeLayoutResizeObserver: null
     };
     const PAGE_ADAPTERS = [
         {
@@ -368,6 +369,7 @@
         bindHorizontalWheel(wrapper.querySelector('.bdf-filter-type-scroll-area'));
         renderFeedTypeFilters('#bdf-filter-type-bar');
         bindFeedTypeEvents();
+        refreshTypeLayoutObservationTargets();
     }
 
     function createUserTypeUi(anchor) {
@@ -389,6 +391,7 @@
         bindHorizontalWheel(wrapper.querySelector('.bdf-filter-type-scroll-area'));
         renderFeedTypeFilters('#bdf-filter-user-type-bar');
         bindFeedTypeEvents();
+        refreshTypeLayoutObservationTargets();
     }
 
     function bindHorizontalWheel(element) {
@@ -414,7 +417,31 @@
         window.addEventListener('resize', () => {
             scheduleTypeBarLayoutSync();
         });
+
+        // `space` 个人动态页的主列宽度会在首屏异步渲染过程中继续变化，
+        // 但这类变化未必会触发 window.resize。
+        // 因此这里额外观察类型栏及其外层容器的尺寸变化，
+        // 只要列宽稳定到最终值，就立即重新计算一次 gap。
+        if (typeof ResizeObserver === 'function') {
+            state.typeLayoutResizeObserver = new ResizeObserver(() => {
+                scheduleTypeBarLayoutSync();
+            });
+        }
         state.typeLayoutWatcherBound = true;
+    }
+
+    function refreshTypeLayoutObservationTargets() {
+        const resizeObserver = state.typeLayoutResizeObserver;
+        if (!resizeObserver) {
+            return;
+        }
+
+        resizeObserver.disconnect();
+        document.querySelectorAll('.bdf-filter-type-scroll-area, .bdf-filter-filter-list, .bdf-filter-ui').forEach((element) => {
+            if (element instanceof Element) {
+                resizeObserver.observe(element);
+            }
+        });
     }
 
     function getCurrentPageAdapter() {
@@ -612,6 +639,7 @@
                 </div>
             `).join('');
         });
+        refreshTypeLayoutObservationTargets();
         scheduleTypeBarLayoutSync();
     }
 
