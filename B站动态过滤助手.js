@@ -5,7 +5,7 @@
 // @description  在 B 站动态页中按关注分组和动态类型过滤动态
 // @author       habixz
 // @match        https://t.bilibili.com/*
-// @match        https://space.bilibili.com/*/dynamic*
+// @match        https://space.bilibili.com/*
 // @grant        unsafeWindow
 // @run-at       document-start
 // @license      MIT
